@@ -1,0 +1,2 @@
+启动虚拟环境后 
+uvicorn main:app --reload 启动后端
