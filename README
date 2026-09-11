@@ -1,2 +1,12 @@
+#启动方式
+##启动后端
 启动虚拟环境后 
 uvicorn main:app --reload 启动后端
+
+##启动前端
+cd my-first-react-app/src
+npm run dev 启动前端
+
+##备注
+记得启动ollama qwen3.5:4k
+
