@@ -10,3 +10,5 @@ npm run dev 启动前端
 ##备注
 记得启动ollama qwen3.5:4k
 
+#todo
+vibe coding 了 database.py 和models.py 还没来得及看，接入数据库很难。

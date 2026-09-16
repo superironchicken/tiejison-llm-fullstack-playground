@@ -6,15 +6,9 @@ function App() {
 	const [stream, setStream] = useState(false)
 
 	async function handleSubmit() {
-		// [新增] 把本轮用户输入组装成一条消息
 		const userMessage = { role: "user", content: message }
-		// [新增] 手动拼出要发给后端的完整历史（不能用 messages 本身，
-		// 因为 setMessages 是异步的，这里读到的还是旧值）
 		const history = [...messages, userMessage]
-
-		// [修改] 原来是 setResult("")，现在把用户消息追加进列表，界面上立刻能看到
 		setMessages(history)
-		// [新增] 清空输入框，方便连续提问
 		setMessage("")
 
 		const response = await fetch("http://127.0.0.1:8000/chat", {
