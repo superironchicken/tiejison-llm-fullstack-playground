@@ -1,3 +1,6 @@
+#这是什么
+这是一个用本地llm，py后端，react前端，的套壳模型对话项目，个人做着玩的
+
 #启动方式
 ##启动后端
 启动虚拟环境后 
@@ -10,5 +13,6 @@ npm run dev 启动前端
 ##备注
 记得启动ollama qwen3.5:4k
 
-#todo
-vibe coding 了 database.py 和models.py 还没来得及看，接入数据库很难。
+#TODO
+能否在React前端和Python后端之间，架设一个轻量级的 Node.js 渲染层（BFF），来实现”前端优化“这个概念
+或者别的什么方式

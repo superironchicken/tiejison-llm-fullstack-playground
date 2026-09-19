@@ -2,6 +2,11 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
 from routers.chat import router as chat_router
+from routers.conversations import router as conversations_router
+
+from database import init_db
+
+init_db()
 
 app = FastAPI()
 
@@ -19,3 +24,4 @@ async def root():
     return {"message": "chat已经启动"}
 
 app.include_router(chat_router)
+app.include_router(conversations_router)

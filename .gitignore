@@ -2,3 +2,5 @@ myenv/
 __pycache__/
 .python-version
 .env
+printdb.py
+test.db

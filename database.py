@@ -1,33 +1,78 @@
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, DeclarativeBase
-
-# SQLite 数据库文件放在项目根目录，第一次连接时会自动创建
-SQLALCHEMY_DATABASE_URL = "sqlite:///./chat.db"
-
-# check_same_thread=False 是 SQLite 特有的设置：
-# SQLite 默认禁止跨线程复用连接，而 FastAPI 的请求可能在不同线程里执行，
-# 所以必须关掉这个检查，否则会报 "SQLite objects created in a thread..." 错误
-engine = create_engine(
-    SQLALCHEMY_DATABASE_URL,
-    connect_args={"check_same_thread": False},
-)
-
-# SessionLocal 是一个 session 工厂：每次调用它都会得到一个新的数据库会话
-# autocommit=False：不自动提交，需要显式 commit，方便出错时回滚
-# autoflush=False：不自动把内存改动刷进数据库，避免意外写入
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+import sqlite3
 
 
-# 所有 ORM 模型都要继承这个 Base，Base 负责收集表结构信息
-class Base(DeclarativeBase):
-    pass
+def connect_db():
+    conn = sqlite3.connect('test.db')
+    conn.execute("PRAGMA foreign_keys = ON")
+    return conn
 
 
-# FastAPI 依赖注入用的函数：每个请求进来时开一个 session，请求结束自动关闭
-# 用 yield 是因为这是"生成器依赖"，yield 之后的代码会在响应结束后执行
-def get_db():
-    b = SessionLocal()
+def init_db():
+    conn = connect_db()
     try:
-        yield db
+        c = conn.cursor()
+        c.execute("""CREATE TABLE IF NOT EXISTS CONVERSATIONS(
+            ID  INTEGER  PRIMARY KEY  AUTOINCREMENT,
+            TITLE  TEXT  NOT NULL,
+            CREATE_TIME  TEXT  DEFAULT CURRENT_TIMESTAMP
+        );""")
+        c.execute("""CREATE TABLE IF NOT EXISTS MESSAGES(
+            ID  INTEGER  PRIMARY KEY  AUTOINCREMENT,
+            CONVERSATION_ID  INTEGER  NOT NULL,
+            ROLE  TEXT  NOT NULL,
+            CONTENT  TEXT  NOT NULL,
+            CREATE_TIME  TEXT  DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (CONVERSATION_ID) REFERENCES CONVERSATIONS(ID) ON DELETE CASCADE
+        );""")
+        conn.commit()
     finally:
-        db.close()
+        conn.close()
+
+
+def create_conversation(title: str) -> int:
+    """新建一个会话，返回它的自增 id。"""
+    conn = connect_db()
+    try:
+        c = conn.cursor()
+        c.execute("INSERT INTO CONVERSATIONS (TITLE) VALUES (?)", (title,))
+        conn.commit()
+        return c.lastrowid
+    finally:
+        conn.close()
+
+
+def save_message(conversation_id: int, role: str, content: str):
+    """往某个会话里写一条消息。"""
+    conn = connect_db()
+    try:
+        c = conn.cursor()
+        c.execute(
+            "INSERT INTO MESSAGES (CONVERSATION_ID, ROLE, CONTENT) VALUES (?, ?, ?)",
+            (conversation_id, role, content),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+def list_conversations():
+    conn = connect_db()
+    try:
+        c = conn.cursor()
+        c.execute("SELECT ID, TITLE FROM CONVERSATIONS ORDER BY ID DESC")
+        # fetchall 返回的是元组列表，这里转成字典，方便接口直接返回 JSON
+        return [{"id": row[0], "title": row[1]} for row in c.fetchall()]
+    finally:
+        conn.close()
+
+
+def get_messages(conversation_id: int):
+    conn = connect_db()
+    try:
+        c = conn.cursor()
+        c.execute(
+            "SELECT ROLE, CONTENT FROM MESSAGES WHERE CONVERSATION_ID = ? ORDER BY ID",
+            (conversation_id,),
+        )
+        return [{"role": row[0], "content": row[1]} for row in c.fetchall()]
+    finally:
+        conn.close()
